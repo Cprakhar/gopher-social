@@ -18,7 +18,7 @@ func (app *application) mount() *gin.Engine {
 
 func (app *application) run(mux http.Handler) error {
 	srv := &http.Server{
-		Addr:         app.config.addr,
+		Addr:         app.config.Addr,
 		Handler:      mux,
 		WriteTimeout: time.Second * 30,
 		ReadTimeout:  time.Second * 10,

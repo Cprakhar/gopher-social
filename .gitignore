@@ -1,3 +1,5 @@
 .air.toml
 .envrc
 bin/
+
+Makefile
