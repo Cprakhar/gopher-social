@@ -6,14 +6,13 @@ import (
 	"time"
 
 	"github.com/cprakhar/gopher-social/internal/config"
-	"github.com/cprakhar/gopher-social/internal/handler"
 	"github.com/cprakhar/gopher-social/internal/db"
+	"github.com/cprakhar/gopher-social/internal/handler"
 	"github.com/cprakhar/gopher-social/internal/store"
 )
 
 type application struct {
 	config  config.Config
-	store   store.Store
 	handler handler.Handler
 }
 
@@ -42,9 +41,9 @@ func main() {
 
 	app := &application{
 		config: cfg,
-		store:  store,
 		handler: handler.Handler{
-			Cfg: cfg,
+			Cfg:    cfg,
+			Store:  store,
 		},
 	}
 

@@ -10,8 +10,19 @@ import (
 func (app *application) mount() *gin.Engine {
 	r := gin.Default()
 
-	apiGrp := r.Group("/v1")
-	apiGrp.GET("/health", app.handler.HealthCheckHandler)
+	api := r.Group("/v1")
+	api.GET("/health", app.handler.HealthCheckHandler)
+
+	users := api.Group("/users")
+	users.POST("/", app.handler.RegisterUserHandler)
+
+	posts := api.Group("/posts")
+	posts.POST("/", app.handler.CreatePostHandler)
+	postsID := posts.Group("/:id")
+	postsID.Use(app.handler.PostsContextMiddleware)
+	postsID.GET("/", app.handler.GetPostHandler)
+	postsID.PATCH("/", app.handler.UpdatePostHandler)
+	postsID.DELETE("/", app.handler.DeletePostHandler)
 
 	return r
 }
