@@ -15,6 +15,11 @@ func (app *application) mount() *gin.Engine {
 
 	users := api.Group("/users")
 	users.POST("/", app.handler.RegisterUserHandler)
+	usersID := users.Group("/:id")
+	usersID.Use(app.handler.UsersContextMiddleware)
+	usersID.GET("/", app.handler.GetUserHandler)
+	usersID.PUT("/follow", app.handler.FollowUserHandler)
+	usersID.PUT("/unfollow", app.handler.UnfollowUserHandler)
 
 	posts := api.Group("/posts")
 	posts.POST("/", app.handler.CreatePostHandler)

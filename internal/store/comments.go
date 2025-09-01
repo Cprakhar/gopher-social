@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -15,9 +16,26 @@ type Comment struct {
 	PostID    string `json:"post_id"`
 	AuthorID  string `json:"author_id"`
 	Content   string `json:"content"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	User      User   `json:"user"`
+}
+
+func (c *CommentsStore) Create(ctx context.Context, comment *Comment) error {
+	query := `
+		INSERT INTO comments (post_id, author_id, content)
+		VALUES ($1, $2, $3)
+		RETURNING id, created_at
+	`
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	if err := c.db.QueryRow(ctx, query, comment.PostID, comment.AuthorID, comment.Content).
+		Scan(&comment.ID, &comment.CreatedAt); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *CommentsStore) GetByPostID(ctx context.Context, postID string) ([]Comment, error) {
@@ -29,7 +47,7 @@ func (c *CommentsStore) GetByPostID(ctx context.Context, postID string) ([]Comme
 	`
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
-	
+
 	rows, err := c.db.Query(ctx, query, postID)
 	if err != nil {
 		return nil, err

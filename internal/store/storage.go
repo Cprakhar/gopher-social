@@ -11,6 +11,7 @@ import (
 var (
 	ErrNotFound          = errors.New("resource not found")
 	QueryTimeoutDuration = 5 * time.Second
+	ErrConflict          = errors.New("resource already exists")
 )
 
 type Store struct {
@@ -22,9 +23,16 @@ type Store struct {
 	}
 	Users interface {
 		Create(context.Context, *User) error
+		GetByID(context.Context, string) (*User, error)
+		GetByEmail(context.Context, string) (*User, error)
 	}
 	Comments interface {
+		Create(context.Context, *Comment) error
 		GetByPostID(context.Context, string) ([]Comment, error)
+	}
+	Followers interface {
+		Follow(context.Context, string, string) error
+		Unfollow(context.Context, string, string) error
 	}
 }
 
@@ -37,6 +45,9 @@ func NewStore(pool *pgxpool.Pool) Store {
 			db: pool,
 		},
 		Comments: &CommentsStore{
+			db: pool,
+		},
+		Followers: &FollowersStore{
 			db: pool,
 		},
 	}

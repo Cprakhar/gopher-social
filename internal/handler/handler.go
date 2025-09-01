@@ -31,3 +31,9 @@ func notFoundErr(ctx *gin.Context, err error) {
 
 	ctx.JSON(http.StatusNotFound, gin.H{"error": "resource not found"})
 }
+
+func conflictErr(ctx *gin.Context, err error) {
+	log.Printf("conflict error: %s path: %s error: %s", ctx.Request.Method, ctx.Request.URL.Path, err.Error())
+
+	ctx.JSON(http.StatusConflict, gin.H{"error": "resource already exists"})
+}
