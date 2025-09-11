@@ -6,6 +6,3 @@ CREATE TABLE IF NOT EXISTS followers (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY(user_id, following_id)
 );
-
-CREATE INDEX IF NOT EXISTS idx_followers_user_id ON followers(user_id);
-CREATE INDEX IF NOT EXISTS idx_followers_following_id ON followers(following_id);

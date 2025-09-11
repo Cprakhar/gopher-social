@@ -20,6 +20,7 @@ type Store struct {
 		GetByID(context.Context, string) (*Post, error)
 		Delete(context.Context, string) error
 		Update(context.Context, *Post) error
+		GetUserFeed(context.Context, string, PaginatedFeedQuery) ([]PostWithMetadata, error)
 	}
 	Users interface {
 		Create(context.Context, *User) error
@@ -36,19 +37,11 @@ type Store struct {
 	}
 }
 
-func NewStore(pool *pgxpool.Pool) Store {
+func NewStore(db *pgxpool.Pool) Store {
 	return Store{
-		Posts: &PostsStore{
-			db: pool,
-		},
-		Users: &UsersStore{
-			db: pool,
-		},
-		Comments: &CommentsStore{
-			db: pool,
-		},
-		Followers: &FollowersStore{
-			db: pool,
-		},
+		Posts:     &PostsStore{db},
+		Users:     &UsersStore{db},
+		Comments:  &CommentsStore{db},
+		Followers: &FollowersStore{db},
 	}
 }

@@ -3,16 +3,20 @@ package handler
 import (
 	"net/http"
 
-	"github.com/cprakhar/gopher-social/internal/config"
-	"github.com/cprakhar/gopher-social/internal/store"
 	"github.com/gin-gonic/gin"
 )
 
-type Handler struct {
-	Cfg   config.Config
-	Store store.Store
-}
+//	@BasePath	/v1
 
+// HealthCheck godoc
+//	@Summary	health check
+//	@Schemes
+//	@Description	get the health status
+//	@Tags			health
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	map[string]string
+//	@Router			/health [get]
 func (h *Handler) HealthCheckHandler(ctx *gin.Context) {
 	data := map[string]string{
 		"status":  "ok",

@@ -14,10 +14,23 @@ type CreatePostPayload struct {
 	Tags    []string `json:"tags"`
 }
 
+// CreatePost godoc
+//	@Summary	create a post
+//	@Schemes
+//	@Description	create a new post
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		CreatePostPayload	true	"post payload"
+//	@Success		201		{object}	store.Post
+//	@Failure		500		{object}	map[string]string
+//	@Security		ApiKeyAuth
+//	@Router			/posts [post]
+
 func (h *Handler) CreatePostHandler(ctx *gin.Context) {
 	var payload CreatePostPayload
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
-		internalServerErr(ctx, err)
+		h.internalServerErr(ctx, err)
 		return
 	}
 
@@ -31,19 +44,32 @@ func (h *Handler) CreatePostHandler(ctx *gin.Context) {
 	}
 
 	if err := h.Store.Posts.Create(ctx, post); err != nil {
-		internalServerErr(ctx, err)
+		h.internalServerErr(ctx, err)
 		return
 	}
 
 	writeJSON(ctx, http.StatusCreated, post)
 }
 
+// GetPost godoc
+//
+//	@Summary	get a post
+//	@Schemes
+//	@Description	get a post by id
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"post id"
+//	@Success		200	{object}	store.Post
+//	@Failure		500	{object}	map[string]string
+//	@Security		ApiKeyAuth
+//	@Router			/posts/{id} [get]
 func (h *Handler) GetPostHandler(ctx *gin.Context) {
 	post := postFromCtx(ctx)
 
 	comments, err := h.Store.Comments.GetByPostID(ctx, post.ID)
 	if err != nil {
-		internalServerErr(ctx, err)
+		h.internalServerErr(ctx, err)
 		return
 	}
 
@@ -52,16 +78,30 @@ func (h *Handler) GetPostHandler(ctx *gin.Context) {
 	writeJSON(ctx, http.StatusOK, post)
 }
 
+// DeletePost godoc
+//
+//	@Summary	delete a post
+//	@Schemes
+//	@Description	delete a post by id
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path	string	true	"post id"
+//	@Success		204	"No Content"
+//	@Failure		404	{object}	map[string]string
+//	@Failure		500	{object}	map[string]string
+//	@Security		ApiKeyAuth
+//	@Router			/posts/{id} [delete]
 func (h *Handler) DeletePostHandler(ctx *gin.Context) {
 	post := postFromCtx(ctx)
 
 	if err := h.Store.Posts.Delete(ctx, post.ID); err != nil {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
-			notFoundErr(ctx, err)
+			h.notFoundErr(ctx, err)
 			return
 		default:
-			internalServerErr(ctx, err)
+			h.internalServerErr(ctx, err)
 			return
 		}
 	}
@@ -75,10 +115,25 @@ type UpdatePostPayload struct {
 	Tags    []string `json:"tags,omitempty"`
 }
 
+// UpdatePost godoc
+//
+//	@Summary	update a post
+//	@Schemes
+//	@Description	update a post by id
+//	@Tags			posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string				true	"post id"
+//	@Param			payload	body		UpdatePostPayload	true	"post payload"
+//	@Success		200		{object}	store.Post
+//	@Failure		400		{object}	map[string]string
+//	@Failure		500		{object}	map[string]string
+//	@Security		ApiKeyAuth
+//	@Router			/posts/{id} [put]
 func (h *Handler) UpdatePostHandler(ctx *gin.Context) {
 	var payload UpdatePostPayload
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
-		badRequestErr(ctx, err)
+		h.badRequestErr(ctx, err)
 		return
 	}
 
@@ -95,7 +150,7 @@ func (h *Handler) UpdatePostHandler(ctx *gin.Context) {
 	}
 
 	if err := h.Store.Posts.Update(ctx, post); err != nil {
-		internalServerErr(ctx, err)
+		h.internalServerErr(ctx, err)
 		return
 	}
 
@@ -108,11 +163,11 @@ func (h *Handler) PostsContextMiddleware(ctx *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
-			notFoundErr(ctx, err)
+			h.notFoundErr(ctx, err)
 			ctx.Abort()
 			return
 		default:
-			internalServerErr(ctx, err)
+			h.internalServerErr(ctx, err)
 			ctx.Abort()
 			return
 		}

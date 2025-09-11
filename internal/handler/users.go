@@ -14,6 +14,17 @@ type CreateUserPayload struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// RegisterUser godoc
+//	@Summary	register a new user
+//	@Schemes
+//	@Description	register a new user
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		CreateUserPayload	true	"user payload"
+//	@Success		201		{object}	map[string]any
+//	@Failure		500		{object}	map[string]string
+//	@Router			/users [post]
 func (h *Handler) RegisterUserHandler(ctx *gin.Context) {
 	var payload CreateUserPayload
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
@@ -28,7 +39,7 @@ func (h *Handler) RegisterUserHandler(ctx *gin.Context) {
 	}
 
 	if err := h.Store.Users.Create(ctx, user); err != nil {
-		internalServerErr(ctx, err)
+		h.internalServerErr(ctx, err)
 		return
 	}
 
@@ -40,6 +51,17 @@ func (h *Handler) RegisterUserHandler(ctx *gin.Context) {
 	})
 }
 
+// GetUser godoc
+//	@Summary	get a user
+//	@Schemes
+//	@Description	get a user by id
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"user id"
+//	@Success		200	{object}	store.User
+//	@Security		ApiKeyAuth
+//	@Router			/users/{id} [get]
 func (h *Handler) GetUserHandler(ctx *gin.Context) {
 	user := userFromCtx(ctx)
 
@@ -50,23 +72,38 @@ type FollowUserPayload struct {
 	UserID string `json:"user_id" binding:"required"`
 }
 
+// FollowUser godoc
+//	@Summary	follow a user
+//	@Schemes
+//	@Description	follow a user by id
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string				true	"user id to follow"
+//	@Param			payload	body		FollowUserPayload	true	"follow user payload"
+//	@Success		201		{object}	nil
+//	@Failure		400		{object}	map[string]string
+//	@Failure		409		{object}	map[string]string
+//	@Failure		500		{object}	map[string]string
+//	@Security		ApiKeyAuth
+//	@Router			/users/{id}/follow [post]
 func (h *Handler) FollowUserHandler(ctx *gin.Context) {
 	followingID := userFromCtx(ctx)
 
 	// Get the user ID from auth context or session (stubbed here)
 	var payload FollowUserPayload
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
-		badRequestErr(ctx, err)
+		h.badRequestErr(ctx, err)
 		return
 	}
 
 	if err := h.Store.Followers.Follow(ctx, payload.UserID, followingID.ID); err != nil {
 		switch {
 		case errors.Is(err, store.ErrConflict):
-			conflictErr(ctx, err)
+			h.conflictErr(ctx, err)
 			return
 		default:
-			internalServerErr(ctx, err)
+			h.internalServerErr(ctx, err)
 			return
 		}
 	}
@@ -74,18 +111,32 @@ func (h *Handler) FollowUserHandler(ctx *gin.Context) {
 	ctx.Status(http.StatusCreated)
 }
 
+// UnfollowUser godoc
+//	@Summary	unfollow a user
+//	@Schemes
+//	@Description	unfollow a user by id
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string				true	"user id to unfollow"
+//	@Param			payload	body		FollowUserPayload	true	"unfollow user payload"
+//	@Success		204		{object}	nil
+//	@Failure		400		{object}	map[string]string
+//	@Failure		500		{object}	map[string]string
+//	@Security		ApiKeyAuth
+//	@Router			/users/{id}/unfollow [post]
 func (h *Handler) UnfollowUserHandler(ctx *gin.Context) {
 	followingID := userFromCtx(ctx)
 
 	// Get the user ID from auth context or session (stubbed here)
 	var payload FollowUserPayload
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
-		badRequestErr(ctx, err)
+		h.badRequestErr(ctx, err)
 		return
 	}
 
 	if err := h.Store.Followers.Unfollow(ctx, payload.UserID, followingID.ID); err != nil {
-		internalServerErr(ctx, err)
+		h.internalServerErr(ctx, err)
 		return
 	}
 
@@ -98,11 +149,11 @@ func (h *Handler) UsersContextMiddleware(ctx *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
-			notFoundErr(ctx, err)
+			h.notFoundErr(ctx, err)
 			ctx.Abort()
 			return
 		default:
-			internalServerErr(ctx, err)
+			h.internalServerErr(ctx, err)
 			ctx.Abort()
 			return
 		}

@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	ApiURL  string
 	Addr    string
 	DB      DBConfig
 	Env     string
@@ -24,6 +25,7 @@ type DBConfig struct {
 func Load() Config {
 	cfg := Config{
 		Addr: env.GetString("ADDR", ":8080"),
+		ApiURL: env.GetString("EXTERNAL_URL", "localhost:8080"),
 		DB: DBConfig{
 			Addr:            env.GetString("DB_ADDR", "postgres://admin:adminpassword@localhost/gopher-social?sslmode=disable"),
 			MaxConns:        int32(env.GetInt("DB_MAX_CONNS", 30)),

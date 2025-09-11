@@ -1,11 +1,19 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 
+	"github.com/cprakhar/gopher-social/internal/config"
+	"github.com/cprakhar/gopher-social/internal/store"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
+
+type Handler struct {
+	Cfg    config.Config
+	Store  store.Store
+	Logger *zap.SugaredLogger
+}
 
 func writeJSON(ctx *gin.Context, status int, data any) {
 	type envelope struct {
@@ -15,25 +23,22 @@ func writeJSON(ctx *gin.Context, status int, data any) {
 	ctx.JSON(status, envelope{Data: data})
 }
 
-func internalServerErr(ctx *gin.Context, err error) {
-	log.Printf("internal server error: %s path: %s error: %s", ctx.Request.Method, ctx.Request.URL.Path, err.Error())
+func (h *Handler) internalServerErr(ctx *gin.Context, err error) {
+	h.Logger.Errorw("internal server error", "method", ctx.Request.Method, "path", ctx.Request.URL.Path, "error", err.Error())
 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "the server encountered a problem"})
 }
 
-func badRequestErr(ctx *gin.Context, err error) {
-	log.Printf("bad request error: %s path: %s error: %s", ctx.Request.Method, ctx.Request.URL.Path, err.Error())
-
+func (h *Handler) badRequestErr(ctx *gin.Context, err error) {
+	h.Logger.Warnw("bad request error", "method", ctx.Request.Method, "path", ctx.Request.URL.Path, "error", err.Error())
 	ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 }
 
-func notFoundErr(ctx *gin.Context, err error) {
-	log.Printf("not found error: %s path: %s error: %s", ctx.Request.Method, ctx.Request.URL.Path, err.Error())
-
+func (h *Handler) notFoundErr(ctx *gin.Context, err error) {
+	h.Logger.Errorw("not found error", "method", ctx.Request.Method, "path", ctx.Request.URL.Path, "error", err.Error())
 	ctx.JSON(http.StatusNotFound, gin.H{"error": "resource not found"})
 }
 
-func conflictErr(ctx *gin.Context, err error) {
-	log.Printf("conflict error: %s path: %s error: %s", ctx.Request.Method, ctx.Request.URL.Path, err.Error())
-
+func (h *Handler) conflictErr(ctx *gin.Context, err error) {
+	h.Logger.Errorw("conflict error", "method", ctx.Request.Method, "path", ctx.Request.URL.Path, "error", err.Error())
 	ctx.JSON(http.StatusConflict, gin.H{"error": "resource already exists"})
 }
