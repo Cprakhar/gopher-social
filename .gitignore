@@ -2,7 +2,6 @@
 .air.toml
 .envrc
 bin/
-Makefile
 
 # web
 next-env.d.ts

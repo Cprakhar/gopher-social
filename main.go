@@ -20,6 +20,8 @@ package main
 
 import (
 	"context"
+	"expvar"
+	"runtime"
 	"time"
 
 	"github.com/cprakhar/gopher-social/internal/auth"
@@ -27,7 +29,10 @@ import (
 	"github.com/cprakhar/gopher-social/internal/db"
 	"github.com/cprakhar/gopher-social/internal/handler"
 	"github.com/cprakhar/gopher-social/internal/mail"
+	"github.com/cprakhar/gopher-social/internal/ratelimiter"
 	"github.com/cprakhar/gopher-social/internal/store"
+	"github.com/cprakhar/gopher-social/internal/store/cache"
+	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
 )
 
@@ -60,8 +65,15 @@ func main() {
 		logger.Panic(err)
 	}
 	defer db.Close()
+	var rdb *redis.Client
+	if cfg.Redis.Enabled {
+		rdb = cache.NewRedisClient(cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB)
+		logger.Info("redis cache connection established")
+	}
 
 	logger.Info("database connection pool established")
+
+	rateLimiter := ratelimiter.NewFixedWindowLimiter(cfg.RateLimiter.RequestsPerTimeFrame, cfg.RateLimiter.TimeFrame)
 
 	store := store.NewStore(db)
 
@@ -76,11 +88,22 @@ func main() {
 			Logger:        logger,
 			Mailer:        mailer,
 			Authenticator: jwtAuthenticator,
+			CacheStorage:  cache.NewRedisStore(rdb),
+			RateLimiter:   rateLimiter,
 		},
 		logger: logger,
 	}
 
+	expvar.NewString("version").Set(cfg.Version)
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
+	if cfg.Redis.Enabled {
+		expvar.Publish("redis", expvar.Func(func() any {
+			return rdb.PoolStats()
+		}))
+	}
+
 	mux := app.mount()
-	logger.Infow("server is running", "addr", app.config.Addr, "env", app.config.Env)
 	logger.Fatal(app.run(mux))
 }

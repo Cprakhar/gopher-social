@@ -4,17 +4,27 @@ import (
 	"time"
 
 	"github.com/cprakhar/gopher-social/internal/env"
+	"github.com/cprakhar/gopher-social/internal/ratelimiter"
 )
 
 type Config struct {
-	ApiURL  string
-	Addr    string
-	DB      DBConfig
-	Env     string
-	Version string
-	Mail    MailConfig
-	WebURL  string
-	Auth    authConfig
+	ApiURL      string
+	Addr        string
+	DB          DBConfig
+	Env         string
+	Version     string
+	Mail        MailConfig
+	WebURL      string
+	Auth        authConfig
+	Redis       redisConfig
+	RateLimiter ratelimiter.Config
+}
+
+type redisConfig struct {
+	Addr     string
+	Password string
+	DB       int
+	Enabled  bool
 }
 
 type authConfig struct {
@@ -78,6 +88,17 @@ func Load() Config {
 				Iss:    env.GetString("AUTH_TOKEN_ISS", "gopher-social"),
 				Aud:    env.GetString("AUTH_TOKEN_AUD", "gopher-social"),
 			},
+		},
+		Redis: redisConfig{
+			Addr:     env.GetString("REDIS_ADDR", "localhost:6379"),
+			Password: env.GetString("REDIS_PASSWORD", ""),
+			DB:       env.GetInt("REDIS_DB", 0),
+			Enabled:  env.GetBool("REDIS_ENABLED", false),
+		},
+		RateLimiter: ratelimiter.Config{
+			RequestsPerTimeFrame: env.GetInt("RATELIMITER_REQUESTS_COUNT", 20),
+			TimeFrame:            time.Second * 5,
+			Enabled:              env.GetBool("RATELIMITER_ENABLED", true),
 		},
 	}
 	return cfg

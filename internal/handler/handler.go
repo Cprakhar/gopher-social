@@ -6,7 +6,9 @@ import (
 	"github.com/cprakhar/gopher-social/internal/auth"
 	"github.com/cprakhar/gopher-social/internal/config"
 	"github.com/cprakhar/gopher-social/internal/mail"
+	"github.com/cprakhar/gopher-social/internal/ratelimiter"
 	"github.com/cprakhar/gopher-social/internal/store"
+	"github.com/cprakhar/gopher-social/internal/store/cache"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -17,6 +19,8 @@ type Handler struct {
 	Logger        *zap.SugaredLogger
 	Mailer        mail.Client
 	Authenticator auth.Authenticator
+	CacheStorage  cache.Store
+	RateLimiter   *ratelimiter.FixedWindowRateLimiter
 }
 
 func writeJSON(ctx *gin.Context, status int, data any) {
@@ -63,4 +67,10 @@ func (h *Handler) unauthorizedBasicErr(ctx *gin.Context, err error) {
 func (h *Handler) forbiddenErr(ctx *gin.Context) {
 	h.Logger.Warnw("forbidden error", "method", ctx.Request.Method, "path", ctx.Request.URL.Path)
 	ctx.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+}
+
+func (h *Handler) tooManyRequestsErr(ctx *gin.Context, retryAfter string) {
+	h.Logger.Warnw("too many requests error", "method", ctx.Request.Method, "path", ctx.Request.URL.Path)
+	ctx.Header("Retry-After", retryAfter)
+	ctx.JSON(http.StatusTooManyRequests, gin.H{"error": "too many requests"})
 }

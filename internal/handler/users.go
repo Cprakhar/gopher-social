@@ -21,7 +21,18 @@ import (
 //	@Security		ApiKeyAuth
 //	@Router			/users/{id} [get]
 func (h *Handler) GetUserHandler(ctx *gin.Context) {
-	user := userFromCtx(ctx)
+	userID := ctx.Param("id")
+	user, err := h.getUser(ctx, userID)
+	if err != nil {
+		switch err {
+		case store.ErrNotFound:
+			h.notFoundErr(ctx, err)
+			return
+		default:
+			h.internalServerErr(ctx, err)
+		}
+		return
+	}
 
 	writeJSON(ctx, http.StatusOK, user)
 }
@@ -34,12 +45,11 @@ func (h *Handler) GetUserHandler(ctx *gin.Context) {
 //	@Tags			users
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string				true	"user id to follow"
-//	@Param			payload	body		FollowUserPayload	true	"follow user payload"
-//	@Success		201		{object}	nil
-//	@Failure		400		{object}	map[string]string
-//	@Failure		409		{object}	map[string]string
-//	@Failure		500		{object}	map[string]string
+//	@Param			id	path		string	true	"user id to follow"
+//	@Success		201	{object}	nil
+//	@Failure		400	{object}	map[string]string
+//	@Failure		409	{object}	map[string]string
+//	@Failure		500	{object}	map[string]string
 //	@Security		ApiKeyAuth
 //	@Router			/users/{id}/follow [post]
 func (h *Handler) FollowUserHandler(ctx *gin.Context) {
@@ -68,11 +78,10 @@ func (h *Handler) FollowUserHandler(ctx *gin.Context) {
 //	@Tags			users
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string				true	"user id to unfollow"
-//	@Param			payload	body		FollowUserPayload	true	"unfollow user payload"
-//	@Success		204		{object}	nil
-//	@Failure		400		{object}	map[string]string
-//	@Failure		500		{object}	map[string]string
+//	@Param			id	path		string	true	"user id to unfollow"
+//	@Success		204	{object}	nil
+//	@Failure		400	{object}	map[string]string
+//	@Failure		500	{object}	map[string]string
 //	@Security		ApiKeyAuth
 //	@Router			/users/{id}/unfollow [post]
 func (h *Handler) UnfollowUserHandler(ctx *gin.Context) {

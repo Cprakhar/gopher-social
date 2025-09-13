@@ -13,12 +13,15 @@ definitions:
     - password
     - username
     type: object
-  handler.FollowUserPayload:
+  handler.CreateUserTokenPayload:
     properties:
-      user_id:
+      email:
+        type: string
+      password:
         type: string
     required:
-    - user_id
+    - email
+    - password
     type: object
   handler.UpdatePostPayload:
     properties:
@@ -104,6 +107,17 @@ definitions:
       version:
         type: integer
     type: object
+  store.Role:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      level:
+        type: integer
+      name:
+        type: string
+    type: object
   store.User:
     properties:
       activated:
@@ -114,6 +128,10 @@ definitions:
         type: string
       id:
         type: string
+      role:
+        $ref: '#/definitions/store.Role'
+      role_id:
+        type: integer
       username:
         type: string
     type: object
@@ -257,7 +275,7 @@ paths:
       summary: get a post
       tags:
       - posts
-    put:
+    patch:
       consumes:
       - application/json
       description: update a post by id
@@ -297,6 +315,46 @@ paths:
       summary: update a post
       tags:
       - posts
+  /tokens:
+    post:
+      consumes:
+      - application/json
+      description: create a JWT token using email and password
+      parameters:
+      - description: credentials payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateUserTokenPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: create a JWT token
+      tags:
+      - auth
   /users:
     post:
       consumes:
@@ -360,12 +418,6 @@ paths:
         name: id
         required: true
         type: string
-      - description: follow user payload
-        in: body
-        name: payload
-        required: true
-        schema:
-          $ref: '#/definitions/handler.FollowUserPayload'
       produces:
       - application/json
       responses:
@@ -405,12 +457,6 @@ paths:
         name: id
         required: true
         type: string
-      - description: unfollow user payload
-        in: body
-        name: payload
-        required: true
-        schema:
-          $ref: '#/definitions/handler.FollowUserPayload'
       produces:
       - application/json
       responses:

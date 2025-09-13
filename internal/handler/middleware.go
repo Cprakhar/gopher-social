@@ -71,7 +71,7 @@ func (h *Handler) AuthTokenMiddleware(ctx *gin.Context) {
 	claims, _ := token.Claims.(jwt.RegisteredClaims)
 
 	userID := claims.Subject
-	user, err := h.Store.Users.GetByID(ctx, userID)
+	user, err := h.getUser(ctx, userID)
 	if err != nil {
 		h.unauthorizedErr(ctx, err)
 		ctx.Abort()
@@ -114,4 +114,40 @@ func (h *Handler) checkRolePrecedence(ctx context.Context, user *store.User, rol
 	}
 
 	return user.Role.Level >= role.Level, nil
+}
+
+func (h *Handler) getUser(ctx context.Context, userID string) (*store.User, error) {
+	if !h.Cfg.Redis.Enabled {
+		return h.Store.Users.GetByID(ctx, userID)
+	}
+
+	user, err := h.CacheStorage.Users.Get(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		user, err = h.Store.Users.GetByID(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := h.CacheStorage.Users.Set(ctx, user); err != nil {
+			return nil, err
+		}
+	}
+
+	return user, nil
+}
+
+func (h *Handler) RateLimiterMiddleware(ctx *gin.Context) {
+	if h.Cfg.RateLimiter.Enabled {
+		allow, retryAfter := h.RateLimiter.Allow(ctx.ClientIP())
+		if !allow {
+			h.tooManyRequestsErr(ctx, retryAfter.String())
+			ctx.Abort()
+			return
+		}
+	}
+	ctx.Next()
 }
