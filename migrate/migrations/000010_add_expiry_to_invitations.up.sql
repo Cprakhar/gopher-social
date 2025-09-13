@@ -1,0 +1,2 @@
+ALTER TABLE user_invitations
+ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ NOT NULL;

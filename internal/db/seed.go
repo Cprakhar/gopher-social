@@ -7,19 +7,23 @@ import (
 	"math/rand/v2"
 
 	"github.com/cprakhar/gopher-social/internal/store"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Seed(store store.Store) {
+func Seed(store store.Store, db *pgxpool.Pool) {
 	ctx := context.Background()
 
 	users := generateUsers(100)
+	tx, _ := db.Begin(ctx)
 	for _, user := range users {
-		if err := store.Users.Create(ctx, user); err != nil {
+		if err := store.Users.Create(ctx, tx, user); err != nil {
+			_ = tx.Rollback(ctx)
 			log.Printf("failed to create user %s: %v", user.Username, err)
 			return
 		}
 	}
 
+	tx.Commit(ctx)
 	posts := generatePosts(users, 300)
 	for _, post := range posts {
 		if err := store.Posts.Create(ctx, post); err != nil {
@@ -115,12 +119,19 @@ func generateUsers(n int) []*store.User {
 	for i := range n {
 		username := usernames[i%len(usernames)] + fmt.Sprintf("%d", i/len(usernames)+1)
 		email := username + "@example.com"
-		users[i] = &store.User{
+		u := &store.User{
 			Username: username,
 			Email:    email,
-			Password: []byte("password"), // In real scenarios, ensure to hash passwords
 		}
+
+		pass := fmt.Sprintf("password%d", i+1)
+		if err := u.Password.Set(pass); err != nil {
+			log.Fatalf("failed to set password for %s: %v", username, err)
+		}
+
+		users[i] = u
 	}
+
 	return users
 }
 

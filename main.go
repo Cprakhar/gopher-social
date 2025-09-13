@@ -22,9 +22,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/cprakhar/gopher-social/internal/auth"
 	"github.com/cprakhar/gopher-social/internal/config"
 	"github.com/cprakhar/gopher-social/internal/db"
 	"github.com/cprakhar/gopher-social/internal/handler"
+	"github.com/cprakhar/gopher-social/internal/mail"
 	"github.com/cprakhar/gopher-social/internal/store"
 	"go.uber.org/zap"
 )
@@ -63,18 +65,22 @@ func main() {
 
 	store := store.NewStore(db)
 
+	jwtAuthenticator := auth.NewJWTAuthenticator(cfg.Auth.Token.Secret, cfg.Auth.Token.Aud, cfg.Auth.Token.Iss)
+
+	mailer := mail.NewSendGrid(cfg.Mail.Sender, cfg.Mail.ApiKey)
 	app := &application{
 		config: cfg,
 		handler: handler.Handler{
-			Cfg:   cfg,
-			Store: store,
-			Logger: logger,
+			Cfg:           cfg,
+			Store:         store,
+			Logger:        logger,
+			Mailer:        mailer,
+			Authenticator: jwtAuthenticator,
 		},
 		logger: logger,
 	}
 
 	mux := app.mount()
-
 	logger.Infow("server is running", "addr", app.config.Addr, "env", app.config.Env)
 	logger.Fatal(app.run(mux))
 }

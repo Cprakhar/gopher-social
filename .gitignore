@@ -1,5 +1,10 @@
+# server
 .air.toml
 .envrc
 bin/
-
 Makefile
+
+# web
+next-env.d.ts
+.next/
+node_modules/

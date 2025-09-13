@@ -9,6 +9,7 @@ import (
 )
 
 // GetUserFeed godoc
+//
 //	@Summary	get user feed
 //	@Schemes
 //	@Description	get a user's feed with pagination
@@ -25,9 +26,9 @@ import (
 //	@Router			/feed [get]
 func (h *Handler) GetUserFeedHandler(ctx *gin.Context) {
 	fp := store.PaginatedFeedQuery{
-		Limit: 20,
+		Limit:  20,
 		Offset: 0,
-		Sort:  "desc",
+		Sort:   "desc",
 	}
 
 	fp, err := fp.Parse(ctx)
@@ -47,13 +48,13 @@ func (h *Handler) GetUserFeedHandler(ctx *gin.Context) {
 	}
 
 	// Get the user ID from auth context or session (stubbed here)
-	userID := "bcd01f06-f6b6-4737-b9a6-465588da0810"
+	user := userFromCtx(ctx)
 
-	feed, err := h.Store.Posts.GetUserFeed(ctx, userID, fp)
+	feed, err := h.Store.Posts.GetUserFeed(ctx, user.ID, fp)
 	if err != nil {
 		h.internalServerErr(ctx, err)
 		return
 	}
-	
+
 	writeJSON(ctx, http.StatusOK, feed)
 }

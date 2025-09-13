@@ -1,0 +1,14 @@
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS role_id BIGINT DEFAULT 1 REFERENCES roles(id);
+
+UPDATE users
+SET role_id = (
+    SELECT id FROM roles WHERE name = 'user' LIMIT 1
+)
+WHERE role_id IS NULL OR role_id = 1;
+
+ALTER TABLE users
+ALTER COLUMN role_id DROP DEFAULT;
+
+ALTER TABLE users
+ALTER COLUMN role_id SET NOT NULL;

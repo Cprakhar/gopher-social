@@ -34,12 +34,12 @@ func (h *Handler) CreatePostHandler(ctx *gin.Context) {
 		return
 	}
 
-	authorID := "1644b5d2-67c6-4ead-9938-76245ec7b68e"
+	author := userFromCtx(ctx)
 
 	post := &store.Post{
 		Title:    payload.Title,
 		Content:  payload.Content,
-		AuthorID: authorID,
+		AuthorID: author.ID,
 		Tags:     payload.Tags,
 	}
 
@@ -129,7 +129,7 @@ type UpdatePostPayload struct {
 //	@Failure		400		{object}	map[string]string
 //	@Failure		500		{object}	map[string]string
 //	@Security		ApiKeyAuth
-//	@Router			/posts/{id} [put]
+//	@Router			/posts/{id} [patch]
 func (h *Handler) UpdatePostHandler(ctx *gin.Context) {
 	var payload UpdatePostPayload
 	if err := ctx.ShouldBindJSON(&payload); err != nil {
