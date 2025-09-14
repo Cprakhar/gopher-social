@@ -21,9 +21,8 @@ jobs:
 
             - name: Update version in main.go
               run: |
-                VERSION=${{ steps.get_version.outputs.VERSION }}
-                sed -i "s/const version = \".*\"/const version = \"$VERSION\"/" main.go
-
+                sed -i "s/const version = \".*\"/const version = \"${{ steps.get_version.outputs.VERSION }}\"/" main.go
+                
             - name: Commit and push if changed
               run: |
                 git config --global user.name "github-actions[bot]"
