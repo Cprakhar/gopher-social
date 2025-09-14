@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/Cprakhar/gopher-social/compare/v1.0.0...v1.0.1) (2025-09-14)
+
+
+### Bug Fixes
+
+* simplify version update command in update-api-version.yaml ([662d31e](https://github.com/Cprakhar/gopher-social/commit/662d31e502e634a7be0d9f9cf269315a03f49df8))
+
 ## 1.0.0 (2025-09-14)
 
 
