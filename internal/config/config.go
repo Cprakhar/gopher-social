@@ -71,7 +71,6 @@ func Load() Config {
 			MaxConnLifetime: env.GetDuration("DB_MAX_CONN_LIFETIME", time.Hour),
 		},
 		Env:     env.GetString("ENV", "development"),
-		Version: env.GetString("VERSION", "0.0.1"),
 		Mail: MailConfig{
 			Exp:    env.GetDuration("MAIL_EXP", 3*24*time.Hour),
 			ApiKey: env.GetString("MAIL_API_KEY", ""),

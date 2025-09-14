@@ -42,9 +42,12 @@ type application struct {
 	logger  *zap.SugaredLogger
 }
 
+const version = "0.0.1"
+
 func main() {
 
 	cfg := config.Load()
+	cfg.Version = version
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
