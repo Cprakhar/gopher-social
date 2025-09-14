@@ -42,7 +42,7 @@ type application struct {
 	logger  *zap.SugaredLogger
 }
 
-const version = ""
+const version = "1.0.1"
 
 func main() {
 
